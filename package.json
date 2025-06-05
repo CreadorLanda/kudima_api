@@ -1,0 +1,23 @@
+{
+  "name": "kudima-api",
+  "version": "1.0.0",
+  "description": "API para o projeto Kudima",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "seed": "node src/config/seedData.js",
+    "setup": "node setup.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "swagger-ui-express": "^5.0.0",
+    "yamljs": "^0.3.0",
+    "cors": "^2.8.5",
+    "mongoose": "^8.2.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
+  }
+} 
