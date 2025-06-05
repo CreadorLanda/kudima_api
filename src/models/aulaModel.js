@@ -19,7 +19,24 @@ const Aula = sequelize.define('Aula', {
     allowNull: false
   },
   categoria: {
-    type: DataTypes.STRING,
+    type: DataTypes.ENUM(
+      'Umbundu', 
+      'Kimbundu', 
+      'Kikongo', 
+      'Chokwe', 
+      'Nganguela', 
+      'Kwanyama', 
+      'Fiote', 
+      'Mbunda', 
+      'Nhaneca-Humbe', 
+      'Luvale', 
+      'Mucubal',
+      'Gramática',
+      'Vocabulário',
+      'Conversação',
+      'Cultura',
+      'Expressões'
+    ),
     allowNull: false
   },
   recursos: {
@@ -36,6 +53,22 @@ const Aula = sequelize.define('Aula', {
       this.setDataValue('recursos', JSON.stringify(value));
     },
     defaultValue: '{"videos":[],"audios":[],"documentos":[]}'
+  },
+  linguaAngolana: {
+    type: DataTypes.ENUM(
+      'Umbundu', 
+      'Kimbundu', 
+      'Kikongo', 
+      'Chokwe', 
+      'Nganguela', 
+      'Kwanyama', 
+      'Fiote', 
+      'Mbunda', 
+      'Nhaneca-Humbe', 
+      'Luvale', 
+      'Mucubal'
+    ),
+    allowNull: false
   }
 }, {
   timestamps: true,

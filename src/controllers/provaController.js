@@ -3,15 +3,15 @@ const geminiService = require('../services/geminiService');
 
 exports.gerarProva = async (req, res) => {
   try {
-    const { tema, nivel, categoria, quantidadeQuestoes = 5 } = req.body;
+    const { tema, nivel, categoria, quantidadeQuestoes = 5, linguaAngolana } = req.body;
     
-    if (!tema || !nivel || !categoria) {
+    if (!tema || !nivel || !categoria || !linguaAngolana) {
       return res.status(400).json({ 
-        mensagem: 'Tema, nível e categoria são obrigatórios para gerar uma prova' 
+        mensagem: 'Tema, nível, categoria e língua angolana são obrigatórios para gerar uma prova' 
       });
     }
     
-    const questoes = await geminiService.gerarQuestoes(tema, quantidadeQuestoes);
+    const questoes = await geminiService.gerarQuestoes(tema, quantidadeQuestoes, linguaAngolana);
     
     if (!questoes || questoes.length === 0) {
       return res.status(500).json({ 
@@ -24,10 +24,11 @@ exports.gerarProva = async (req, res) => {
       descricao: `Prova com ${questoes.length} questões sobre ${tema}`,
       categoria,
       nivel,
+      linguaAngolana,
       questoes
-        });
+    });
       
-      res.status(201).json(novaProva);
+    res.status(201).json(novaProva);
   } catch (error) {
     res.status(500).json({ 
       mensagem: 'Erro ao gerar prova com IA', 
@@ -38,11 +39,12 @@ exports.gerarProva = async (req, res) => {
 
 exports.listarProvas = async (req, res) => {
   try {
-    const { categoria, nivel } = req.query;
+    const { categoria, nivel, linguaAngolana } = req.query;
     let where = {};
     
     if (categoria) where.categoria = categoria;
     if (nivel) where.nivel = nivel;
+    if (linguaAngolana) where.linguaAngolana = linguaAngolana;
     
     const provas = await Prova.findAll({ where });
     res.status(200).json(provas);
@@ -115,7 +117,7 @@ exports.verificarRespostas = async (req, res) => {
       return res.status(400).json({ mensagem: 'Dados inválidos para verificação' });
     }
     
-    const prova = await Prova.findById(provaId);
+    const prova = await Prova.findByPk(provaId);
     
     if (!prova) {
       return res.status(404).json({ mensagem: 'Prova não encontrada' });

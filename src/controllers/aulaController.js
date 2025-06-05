@@ -4,16 +4,19 @@ const { Op } = require('sequelize');
 
 exports.gerarAula = async (req, res) => {
   try {
-    const { tema, nivel, categoria } = req.body;
+    const { tema, nivel, categoria, linguaAngolana } = req.body;
     
-    if (!tema || !nivel || !categoria) {
+    if (!tema || !nivel || !categoria || !linguaAngolana) {
       return res.status(400).json({ 
-        mensagem: 'Tema, nível e categoria são obrigatórios para gerar uma aula' 
+        mensagem: 'Tema, nível, categoria e língua angolana são obrigatórios para gerar uma aula' 
       });
     }
     
-    const aulaGerada = await geminiService.gerarAula(tema, nivel, categoria);
-    const novaAula = await Aula.create(aulaGerada);
+    const aulaGerada = await geminiService.gerarAula(tema, nivel, categoria, linguaAngolana);
+    const novaAula = await Aula.create({
+      ...aulaGerada,
+      linguaAngolana
+    });
     
     res.status(201).json(novaAula);
   } catch (error) {
@@ -26,11 +29,12 @@ exports.gerarAula = async (req, res) => {
 
 exports.listarAulas = async (req, res) => {
   try {
-    const { categoria, nivel } = req.query;
+    const { categoria, nivel, linguaAngolana } = req.query;
     let where = {};
     
     if (categoria) where.categoria = categoria;
     if (nivel) where.nivel = nivel;
+    if (linguaAngolana) where.linguaAngolana = linguaAngolana;
     
     const aulas = await Aula.findAll({ where });
     res.status(200).json(aulas);
@@ -97,21 +101,22 @@ exports.excluirAula = async (req, res) => {
 
 exports.buscarAulas = async (req, res) => {
   try {
-    const { termo } = req.query;
+    const { termo, linguaAngolana } = req.query;
+    let where = {};
     
-    if (!termo) {
-      return res.status(400).json({ mensagem: 'Termo de busca não fornecido' });
+    if (linguaAngolana) {
+      where.linguaAngolana = linguaAngolana;
     }
     
-    const aulas = await Aula.findAll({
-      where: {
-        [Op.or]: [
-          { titulo: { [Op.like]: `%${termo}%` } },
-          { descricao: { [Op.like]: `%${termo}%` } },
-          { conteudo: { [Op.like]: `%${termo}%` } }
-        ]
-      }
-    });
+    if (termo) {
+      where[Op.or] = [
+        { titulo: { [Op.like]: `%${termo}%` } },
+        { descricao: { [Op.like]: `%${termo}%` } },
+        { conteudo: { [Op.like]: `%${termo}%` } }
+      ];
+    }
+    
+    const aulas = await Aula.findAll({ where });
     
     res.status(200).json(aulas);
   } catch (error) {

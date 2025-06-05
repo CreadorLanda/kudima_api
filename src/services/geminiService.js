@@ -5,22 +5,40 @@ class GeminiService {
     const apiKey = process.env.GEMINI_API_KEY;
     this.genAI = new GoogleGenerativeAI(apiKey);
     this.model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
+    
+    // Lista de línguas nacionais angolanas
+    this.linguasAngolanas = [
+      'Umbundu',
+      'Kimbundu',
+      'Kikongo',
+      'Chokwe',
+      'Nganguela',
+      'Kwanyama',
+      'Fiote',
+      'Mbunda',
+      'Nhaneca-Humbe',
+      'Luvale',
+      'Mucubal'
+    ];
   }
 
-  async gerarAula(tema, nivel, categoria) {
+  async gerarAula(tema, nivel, categoria, linguaAngolana) {
     try {
+      // Verificar se o tema está relacionado a línguas angolanas
+      const temaValidado = this._validarTema(tema, linguaAngolana);
+      
       const prompt = `
-        Crie uma aula completa sobre "${tema}" para nível ${nivel}. 
+        Crie uma aula completa sobre "${temaValidado}" para nível ${nivel}, focando especificamente na língua angolana ${linguaAngolana}. 
         A aula deve ser estruturada da seguinte forma:
         
         1. Título criativo e envolvente
         2. Breve descrição introdutória (máximo 3 parágrafos)
-        3. Conteúdo principal detalhado e educativo (inclua exemplos, explicações e conceitos)
+        3. Conteúdo principal detalhado e educativo sobre a língua ${linguaAngolana} (inclua exemplos, explicações e conceitos)
         4. Recursos sugeridos para aprofundamento
         5. Exercícios de fixação
         
         A aula deve ser adequada para o nível ${nivel} e categoria "${categoria}".
-        O conteúdo deve ser educativo, preciso e envolvente.
+        O conteúdo deve ser educativo, preciso e envolvente, e DEVE focar exclusivamente na língua nacional angolana ${linguaAngolana}.
       `;
 
       const result = await this.model.generateContent(prompt);
@@ -69,12 +87,12 @@ class GeminiService {
       }
 
       // Se não conseguimos extrair automaticamente, use todo o texto
-      if (!titulo) titulo = tema;
+      if (!titulo) titulo = temaValidado;
       if (!descricao) descricao = text.substring(0, 300) + '...';
       if (!conteudo) conteudo = text;
 
       return {
-        titulo: titulo || tema,
+        titulo: titulo || temaValidado,
         descricao: descricao.trim(),
         conteudo: conteudo.trim(),
         nivel,
@@ -91,23 +109,26 @@ class GeminiService {
     }
   }
 
-  async gerarQuestoes(tema, quantidade = 5) {
+  async gerarQuestoes(tema, quantidade = 5, linguaAngolana) {
     try {
+      // Verificar se o tema está relacionado a línguas angolanas
+      const temaValidado = this._validarTema(tema, linguaAngolana);
+      
       const prompt = `
-        Crie ${quantidade} questões de múltipla escolha sobre "${tema}".
+        Crie ${quantidade} questões de múltipla escolha sobre "${temaValidado}" focando exclusivamente na língua nacional angolana ${linguaAngolana}.
         
         Para cada questão, forneça:
-        1. A pergunta
+        1. A pergunta relacionada à língua ${linguaAngolana}
         2. 4 opções de resposta
         3. O índice da resposta correta (de 0 a 3)
         
         Formate cada questão da seguinte forma exata para facilitar o parsing:
 
-        PERGUNTA: [Texto da pergunta]
+        PERGUNTA: [Texto da pergunta sobre a língua ${linguaAngolana}]
         OPCOES: ["Opção 1", "Opção 2", "Opção 3", "Opção 4"]
         RESPOSTA: [índice da resposta correta]
         
-        Certifique-se de que as questões sejam educativas e precisas.
+        Certifique-se de que as questões sejam educativas, precisas e relacionadas exclusivamente à língua nacional angolana ${linguaAngolana}.
       `;
 
       const result = await this.model.generateContent(prompt);
@@ -161,6 +182,29 @@ class GeminiService {
       console.error('Erro ao gerar questões com Gemini:', error);
       throw new Error('Falha ao gerar questões com IA');
     }
+  }
+  
+  // Método para validar se o tema está relacionado às línguas angolanas
+  _validarTema(tema, linguaAngolana) {
+    // Se a língua foi especificada, prioriza ela
+    if (linguaAngolana) {
+      if (!tema.toLowerCase().includes(linguaAngolana.toLowerCase())) {
+        return `${tema} na língua ${linguaAngolana}`;
+      }
+      return tema;
+    }
+    
+    // Verifica se o tema já menciona alguma língua angolana
+    const temLinguaAngolana = this.linguasAngolanas.some(lingua => 
+      tema.toLowerCase().includes(lingua.toLowerCase())
+    );
+    
+    // Se não mencionar, adapta o tema para incluir línguas angolanas
+    if (!temLinguaAngolana) {
+      return `${tema} nas línguas nacionais angolanas`;
+    }
+    
+    return tema;
   }
 }
 

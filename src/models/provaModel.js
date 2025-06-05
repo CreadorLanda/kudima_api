@@ -11,11 +11,34 @@ const Prova = sequelize.define('Prova', {
     allowNull: false
   },
   categoria: {
-    type: DataTypes.STRING,
+    type: DataTypes.ENUM(
+      'Gramática',
+      'Vocabulário',
+      'Conversação',
+      'Cultura',
+      'Expressões',
+      'Compreensão'
+    ),
     allowNull: false
   },
   nivel: {
     type: DataTypes.ENUM('iniciante', 'intermediário', 'avançado'),
+    allowNull: false
+  },
+  linguaAngolana: {
+    type: DataTypes.ENUM(
+      'Umbundu', 
+      'Kimbundu', 
+      'Kikongo', 
+      'Chokwe', 
+      'Nganguela', 
+      'Kwanyama', 
+      'Fiote', 
+      'Mbunda', 
+      'Nhaneca-Humbe', 
+      'Luvale', 
+      'Mucubal'
+    ),
     allowNull: false
   },
   questoes: {
