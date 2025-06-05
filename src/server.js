@@ -4,11 +4,16 @@ const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
 const path = require('path');
 const dotenv = require('dotenv');
-const connectDB = require('./config/db');
+const { testConnection, sequelize } = require('./config/db');
+const { sincronizarModelos } = require('./models');
 
 dotenv.config();
 
-connectDB();
+// Testar conexão e sincronizar modelos
+(async () => {
+  await testConnection();
+  await sincronizarModelos();
+})();
 
 const app = express();
 const PORT = process.env.PORT || 3000;

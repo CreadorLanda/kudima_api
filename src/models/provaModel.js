@@ -1,43 +1,38 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/db');
 
-const questaoSchema = new mongoose.Schema({
-  pergunta: {
-    type: String,
-    required: true
-  },
-  opcoes: {
-    type: [String],
-    required: true
-  },
-  resposta: {
-    type: Number,
-    required: true
-  }
-});
-
-const provaSchema = new mongoose.Schema({
+const Prova = sequelize.define('Prova', {
   titulo: {
-    type: String,
-    required: true
+    type: DataTypes.STRING,
+    allowNull: false
   },
   descricao: {
-    type: String,
-    required: true
+    type: DataTypes.TEXT,
+    allowNull: false
   },
   categoria: {
-    type: String,
-    required: true
+    type: DataTypes.STRING,
+    allowNull: false
   },
   nivel: {
-    type: String,
-    enum: ['iniciante', 'intermediário', 'avançado'],
-    required: true
+    type: DataTypes.ENUM('iniciante', 'intermediário', 'avançado'),
+    allowNull: false
   },
-  questoes: [questaoSchema],
-  dataCriacao: {
-    type: Date,
-    default: Date.now
+  questoes: {
+    type: DataTypes.TEXT,
+    get() {
+      const value = this.getDataValue('questoes');
+      return value ? JSON.parse(value) : [];
+    },
+    set(value) {
+      this.setDataValue('questoes', JSON.stringify(value));
+    },
+    defaultValue: '[]'
   }
+}, {
+  timestamps: true,
+  createdAt: 'dataCriacao',
+  updatedAt: 'dataAtualizacao'
 });
 
-module.exports = mongoose.model('Prova', provaSchema); 
+module.exports = Prova; 

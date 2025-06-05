@@ -1,32 +1,50 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/db');
 
-const usuarioSchema = new mongoose.Schema({
+const Usuario = sequelize.define('Usuario', {
   nome: {
-    type: String,
-    required: true
+    type: DataTypes.STRING,
+    allowNull: false
   },
   email: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false,
     unique: true
   },
   senha: {
-    type: String,
-    required: true
+    type: DataTypes.STRING,
+    allowNull: false
   },
   tipo: {
-    type: String,
-    enum: ['estudante', 'professor', 'admin'],
-    default: 'estudante'
+    type: DataTypes.ENUM('estudante', 'professor', 'admin'),
+    defaultValue: 'estudante'
   },
-  dataCriacao: {
-    type: Date,
-    default: Date.now
+  aulasCompletas: {
+    type: DataTypes.TEXT,
+    get() {
+      const value = this.getDataValue('aulasCompletas');
+      return value ? JSON.parse(value) : [];
+    },
+    set(value) {
+      this.setDataValue('aulasCompletas', JSON.stringify(value));
+    },
+    defaultValue: '[]'
   },
-  progresso: {
-    aulasCompletas: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Aula' }],
-    provasRealizadas: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Prova' }]
+  provasRealizadas: {
+    type: DataTypes.TEXT,
+    get() {
+      const value = this.getDataValue('provasRealizadas');
+      return value ? JSON.parse(value) : [];
+    },
+    set(value) {
+      this.setDataValue('provasRealizadas', JSON.stringify(value));
+    },
+    defaultValue: '[]'
   }
+}, {
+  timestamps: true,
+  createdAt: 'dataCriacao',
+  updatedAt: 'dataAtualizacao'
 });
 
-module.exports = mongoose.model('Usuario', usuarioSchema); 
+module.exports = Usuario; 

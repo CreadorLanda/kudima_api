@@ -1,14 +1,50 @@
-const Prova = require('../models/provaModel');
+const { Prova } = require('../models');
+const geminiService = require('../services/geminiService');
+
+exports.gerarProva = async (req, res) => {
+  try {
+    const { tema, nivel, categoria, quantidadeQuestoes = 5 } = req.body;
+    
+    if (!tema || !nivel || !categoria) {
+      return res.status(400).json({ 
+        mensagem: 'Tema, nível e categoria são obrigatórios para gerar uma prova' 
+      });
+    }
+    
+    const questoes = await geminiService.gerarQuestoes(tema, quantidadeQuestoes);
+    
+    if (!questoes || questoes.length === 0) {
+      return res.status(500).json({ 
+        mensagem: 'Não foi possível gerar questões para a prova' 
+      });
+    }
+    
+    const novaProva = await Prova.create({
+      titulo: `Avaliação sobre ${tema}`,
+      descricao: `Prova com ${questoes.length} questões sobre ${tema}`,
+      categoria,
+      nivel,
+      questoes
+        });
+      
+      res.status(201).json(novaProva);
+  } catch (error) {
+    res.status(500).json({ 
+      mensagem: 'Erro ao gerar prova com IA', 
+      erro: error.message 
+    });
+  }
+};
 
 exports.listarProvas = async (req, res) => {
   try {
     const { categoria, nivel } = req.query;
-    let filtro = {};
+    let where = {};
     
-    if (categoria) filtro.categoria = categoria;
-    if (nivel) filtro.nivel = nivel;
+    if (categoria) where.categoria = categoria;
+    if (nivel) where.nivel = nivel;
     
-    const provas = await Prova.find(filtro);
+    const provas = await Prova.findAll({ where });
     res.status(200).json(provas);
   } catch (error) {
     res.status(500).json({ mensagem: 'Erro ao listar provas', erro: error.message });
@@ -17,10 +53,12 @@ exports.listarProvas = async (req, res) => {
 
 exports.obterProva = async (req, res) => {
   try {
-    const prova = await Prova.findById(req.params.id);
+    const prova = await Prova.findByPk(req.params.id);
+    
     if (!prova) {
       return res.status(404).json({ mensagem: 'Prova não encontrada' });
     }
+    
     res.status(200).json(prova);
   } catch (error) {
     res.status(500).json({ mensagem: 'Erro ao obter prova', erro: error.message });
@@ -29,9 +67,8 @@ exports.obterProva = async (req, res) => {
 
 exports.criarProva = async (req, res) => {
   try {
-    const novaProva = new Prova(req.body);
-    const provaSalva = await novaProva.save();
-    res.status(201).json(provaSalva);
+    const novaProva = await Prova.create(req.body);
+    res.status(201).json(novaProva);
   } catch (error) {
     res.status(400).json({ mensagem: 'Erro ao criar prova', erro: error.message });
   }
@@ -39,16 +76,15 @@ exports.criarProva = async (req, res) => {
 
 exports.atualizarProva = async (req, res) => {
   try {
-    const provaAtualizada = await Prova.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
+    const [linhasAtualizadas] = await Prova.update(req.body, {
+      where: { id: req.params.id }
+    });
     
-    if (!provaAtualizada) {
+    if (linhasAtualizadas === 0) {
       return res.status(404).json({ mensagem: 'Prova não encontrada' });
     }
     
+    const provaAtualizada = await Prova.findByPk(req.params.id);
     res.status(200).json(provaAtualizada);
   } catch (error) {
     res.status(400).json({ mensagem: 'Erro ao atualizar prova', erro: error.message });
@@ -57,9 +93,11 @@ exports.atualizarProva = async (req, res) => {
 
 exports.excluirProva = async (req, res) => {
   try {
-    const provaExcluida = await Prova.findByIdAndDelete(req.params.id);
+    const linhasExcluidas = await Prova.destroy({
+      where: { id: req.params.id }
+    });
     
-    if (!provaExcluida) {
+    if (linhasExcluidas === 0) {
       return res.status(404).json({ mensagem: 'Prova não encontrada' });
     }
     

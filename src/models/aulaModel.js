@@ -1,36 +1,46 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/db');
 
-const aulaSchema = new mongoose.Schema({
+const Aula = sequelize.define('Aula', {
   titulo: {
-    type: String,
-    required: true
+    type: DataTypes.STRING,
+    allowNull: false
   },
   descricao: {
-    type: String,
-    required: true
+    type: DataTypes.TEXT,
+    allowNull: false
   },
   conteudo: {
-    type: String,
-    required: true
+    type: DataTypes.TEXT,
+    allowNull: false
   },
   nivel: {
-    type: String,
-    enum: ['iniciante', 'intermediário', 'avançado'],
-    required: true
+    type: DataTypes.ENUM('iniciante', 'intermediário', 'avançado'),
+    allowNull: false
   },
   categoria: {
-    type: String,
-    required: true
+    type: DataTypes.STRING,
+    allowNull: false
   },
   recursos: {
-    videos: [String],
-    audios: [String],
-    documentos: [String]
-  },
-  dataCriacao: {
-    type: Date,
-    default: Date.now
+    type: DataTypes.TEXT,
+    get() {
+      const value = this.getDataValue('recursos');
+      return value ? JSON.parse(value) : {
+        videos: [],
+        audios: [],
+        documentos: []
+      };
+    },
+    set(value) {
+      this.setDataValue('recursos', JSON.stringify(value));
+    },
+    defaultValue: '{"videos":[],"audios":[],"documentos":[]}'
   }
+}, {
+  timestamps: true,
+  createdAt: 'dataCriacao',
+  updatedAt: 'dataAtualizacao'
 });
 
-module.exports = mongoose.model('Aula', aulaSchema); 
+module.exports = Aula; 
